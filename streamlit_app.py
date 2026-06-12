@@ -41,15 +41,19 @@ async def send_rag_ingest_event(pdf_path: Path) -> None:
 
 
 st.title("Upload a PDF to Ingest")
-uploaded = st.file_uploader("Choose a PDF", type=["pdf"], accept_multiple_files=False)
+uploaded_files = st.file_uploader("Choose a PDF", type=["pdf"], accept_multiple_files=True)
 
-if uploaded is not None:
+if uploaded_files:
     with st.spinner("Uploading and triggering ingestion..."):
-        path = save_uploaded_pdf(uploaded)
-        # Kick off the event and block until the send completes
-        asyncio.run(send_rag_ingest_event(path))
+        for uploaded in uploaded_files:
+            path = save_uploaded_pdf(uploaded)
+            asyncio.run(send_rag_ingest_event(path))
+
+    st.success(
+        f"Ingested {len(uploaded_files)} PDF(s)"
+    )
         # Small pause for user feedback continuity
-        time.sleep(0.3)
+    time.sleep(0.3)
     st.success(f"Triggered ingestion for: {path.name}")
     st.caption("You can upload another PDF if you like.")
 
@@ -121,5 +125,7 @@ with st.form("rag_query_form"):
         st.write(answer or "(No answer)")
         if sources:
             st.caption("Sources")
-            for s in sources:
-                st.write(f"- {s}")
+            st.subheader("Sources")
+
+            for s in sorted(sources):
+                st.write(f"📄 {s}")
